@@ -52,13 +52,13 @@ def parse_links(url, url_start):
         import traceback
         traceback.print_stack()
         print('Exception while parsing url', e)
-        e.printStackTrace()
         return [url_start]
 
 def isValidUrl(url):
-    base_urls = ['http://espn.go.com/nfl/', 'http://espn.go.com/blog/']
-    bad_words = ['photos', '/nfl/scoreboard', '/nfl/standings', '/nfl/draft','/nfl/game', 
-                '/nfl/player', '/nfl/qbr', '/nfl/statistics', '/nfl/coaches']
+    base_urls = ['http://espn.go.com/nfl/story', 'http://espn.go.com/nfl/recap', 'http://espn.go.com/blog/']
+    bad_words = ['/blog/ncf', '/blog/sec', '/blog/acc', '/blog/ncb', '/blog/nba', '/blog/mlb', '/blog/colleges']
+
+
     #pathalogical urls
     for bad_word in bad_words:
         if bad_word in url:
