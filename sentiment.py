@@ -167,6 +167,4 @@ def get_Team(text):
                     continue
     print TeamDict
 
-get_Team(text)
-
 
