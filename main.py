@@ -31,15 +31,19 @@ def domain(url):
     return hostname
     
 #This function will return all the urls on a page, and return the start url if there is an error or no urls
-def parse_links(url, soup, url_start):
+def parse_links(url, url_start):
     url_list = []
     myopener = MyOpener()
     try:
         #find all hyperlinks using beautiful soup
+        page = myopener.open(url)
+        text = page.read()
+        page.close()
+        soup = BeautifulSoup(text)
         tags = soup.findAll('a', href=True)
         for tag in tags:
             tmp = urlparse.urljoin(url, tag['href'])
-            if isValidUrl(tmp):
+            if isValidUrl(tmp) and tmp != url: #disable self links
                 url_list.append(tmp)
         if len(url_list) == 0:
             return [url_start]
@@ -53,7 +57,8 @@ def parse_links(url, soup, url_start):
 
 def isValidUrl(url):
     base_urls = ['http://espn.go.com/nfl/', 'http://espn.go.com/blog/']
-    bad_words = ['photos', '/nfl/scoreboard', '/nfl/standings', '/nfl/draft']
+    bad_words = ['photos', '/nfl/scoreboard', '/nfl/standings', '/nfl/draft','/nfl/game', 
+                '/nfl/player', '/nfl/qbr', '/nfl/statistics', '/nfl/coaches']
     #pathalogical urls
     for bad_word in bad_words:
         if bad_word in url:
@@ -161,14 +166,14 @@ team_sentiments = Counter()
 for i in range(num_of_visits):
     print  i , ' Visiting... ', current_url
     if random.random() < 0.95: #follow a link!
+        url_list = parse_links(current_url, url_start)
+        current_url = random.choice(url_list)
+
         myopener = MyOpener()
         page = myopener.open(current_url)
         text = page.read()
         page.close()
         soup = BeautifulSoup(text)
-
-        url_list = parse_links(current_url, soup, url_start)
-        current_url = random.choice(url_list)
 
         #get sentiments
         paragraphs = [p.get_text() for p in soup.findAll('p')]

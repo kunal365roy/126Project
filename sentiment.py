@@ -111,8 +111,7 @@ Game notes
 Denver is 4-0 in road games. ... Already missing Ware (back), the Broncos also lost LBs Shane Ray (knee) and Corey Nelson (knee). Ray's injury appears to be the most serious. He left the stadium on crutches and his knee immobilized. ... Sanders hurt his left shoulder while making a catch late in regulation. ... Barnidge is the first Browns TE to catch a TD pass in four straight games since Ozzie Newsome in 1981.
 '''
 
-text4 = 'Broncos not amazing'
-print TextBlob(text4).sentences[0].sentiment
+text4 = 'Broncos '
 
 
 # Remove non ascii characters 
