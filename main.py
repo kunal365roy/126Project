@@ -14,7 +14,7 @@ from textblob import TextBlob
 TeamRegexTuple = namedtuple('TeamRegexTuple', ['city', 'teamname'])
 
 #http://wolfprojects.altervista.org/articles/change-urllib-user-agent/ 
-num_of_visits = 100
+num_of_visits = 400
 
 print('Starting espn pagerank with ' + str(num_of_visits) + ' visits.')
 
@@ -53,6 +53,12 @@ def parse_links(url, soup, url_start):
 
 def isValidUrl(url):
     base_urls = ['http://espn.go.com/nfl/', 'http://espn.go.com/blog/']
+    bad_words = ['photos', '/nfl/scoreboard', '/nfl/standings', '/nfl/draft']
+    #pathalogical urls
+    for bad_word in bad_words:
+        if bad_word in url:
+            return False
+    
     for base_url in base_urls:
         if url.startswith(base_url):
             return True
