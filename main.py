@@ -170,18 +170,23 @@ for i in range(num_of_visits):
         url_list = parse_links(current_url, soup, url_start)
         current_url = random.choice(url_list)
 
-
+        #get sentiments
         paragraphs = [p.get_text() for p in soup.findAll('p')]
         for paragraph in paragraphs:
             team_sentiments += sentiment.get_sentiment(paragraph)
 
-        #sentiment.get_sentiment()
-        
-        #team_mentions = count_team_mentions(current_url, team_regexes)
-        #print(team_mentions)
+        #get normalized popularity
+        team_mentions = count_team_mentions(current_url, team_regexes)
+        total = sum(team_mentions.values(), 0.0)
+        for key in team_mentions: 
+            team_mentions[key] /= total
+        team_counter += team_mentions
 
 
     else: #click the "home" button!
         current_url = url_start
 
+print('============Sentiments=============')
 print(team_sentiments)
+print('============Popularity=============')
+print(team_counter)
