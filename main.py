@@ -5,6 +5,10 @@ import urllib
 import urlparse
 import random
 from bs4 import BeautifulSoup
+from collections import Counter
+from collections import namedtuple
+
+TeamRegexTuple = namedtuple('TeamRegexTuple', ['city', 'teamname'])
 
 #http://wolfprojects.altervista.org/articles/change-urllib-user-agent/ 
 
@@ -42,6 +46,91 @@ def parse_links(url, url_start):
         return url_list
     except:
         return [url_start]
+
+def generate_teams_regex (file_path):
+
+    '''
+    Generates team and city name regexes from a structured file
+    
+    File should be structured like
+    Seattle Seahawks
+    San Francisco 49ers
+
+    (i.e. city name with an arbitrary number of words,
+        team name as the last word)
+
+    '''
+    
+    team_names = []
+    teams_regex = {}
+    with open(file_path, 'r') as teams:
+        lines = teams.readlines()
+        for line in lines:
+            data = line.strip('\n').split()
+            name = data[-1]
+            city = ' '.join(data[0:-1])
+            city_pre_regex = '{0}|{1}'.format(city, city.upper)
+
+            regex_list = TeamRegexTuple(re.compile(city_pre_regex), re.compile(name))
+            team_names.append(name)
+            teams_regex[name] = regex_list
+
+    return team_names, teams_regex
+
+def count_team_mentions (target_url, teams_regex):
+    '''
+    Only goes through the paragraph tags, so we don't get
+        confused by scores listed in sidebars and menu bars
+        and other similar junk
+
+    The intent is to consider only the content of the article
+
+    @param target_url - url of the article page that we want to count
+    @param teams_regex - dictionary containing teams and their associated regexes
+    '''
+
+    opener = MyOpener()
+    page = opener.open(target_url)
+    text = page.read()
+    page.close()
+
+
+    mention_counter = Counter()
+
+    soup = BeautifulSoup(text)
+    paragraph_nodes = map(str, soup.findAll('p'))
+
+    mention_counter = Counter()
+
+    # first need to figure out which teams are worth looking at.
+    # want city and team name to appear at least once each in the same article
+    # this way if we click on a baseball link for the St. Louis Cardinals
+    #   we won't start capturing data for the NFL Arizona Cardinals
+    useful_teams = []
+    for team_name, team_regexes in teams_regex.items():
+        city_regex = team_regexes.city
+        name_regex = team_regexes.teamname
+
+        contains_city_regex, contains_name_regex = False, False
+        for paragraph in paragraph_nodes:
+            contains_city_regex = contains_city_regex or \
+                        (len(re.findall(city_regex, paragraph)) != 0)
+            contains_name_regex = contains_name_regex or \
+                        (len(re.findall(name_regex, paragraph)) != 0)
+
+            if contains_city_regex and contains_name_regex:
+                break
+
+        if contains_city_regex and contains_name_regex:
+            useful_teams.append(team_name)
+
+    for paragraph in paragraph_nodes:
+        for team_name in useful_teams:
+            for regex in teams_regex[team_name]:
+                match_count = len(re.findall(regex, paragraph))
+                mention_counter[team_name] += match_count
+
+    return mention_counter
 
 url_start = "http://www.eecs.berkeley.edu/Research/"
 current_url = url_start
