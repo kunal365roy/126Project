@@ -1,4 +1,5 @@
 from textblob import TextBlob
+from collections import Counter
 
 text = '''
 NASHVILLE, Tenn. -- Titans coach Ken Whisenhunt and left tackle Taylor Lewan had strong words for Dolphins defensive end Olivier Vernon's hit on Marcus Mariota in the first quarter of Sunday's game.
@@ -115,15 +116,13 @@ Denver is 4-0 in road games. ... Already missing Ware (back), the Broncos also l
 def non_ascii(text):
     return ''.join([i if ord(i) < 128 else ' ' for i in text])
 
-# Function returns Teams and associated total sentiment 
-
-# Analyze single team sentiment for titans
-def get_Team(text):
+# Returns counter with sentiment for each team
+def get_sentiment(text):
     blob = TextBlob(non_ascii(text))
     blob.tags           # [('The', 'DT'), ('titular', 'JJ'),
                     #  ('threat', 'NN'), ('of', 'IN'), ...]
   
-    TeamDict={
+    TeamCounter= Counter({
              ("Seattle","Seahawks"):0,
              ("San Francisco","49ers"):0,
              ("St. Louis", "Rams"):0,
@@ -156,15 +155,13 @@ def get_Team(text):
              ("Jacksonville","Jaguars"):0,
              ("Houston","Texans"):0,
              ("Tennesee","Titans"):0,
-             }
+             })
 
     # check each 
     for sentence in blob.sentences:
-        for key in TeamDict: 
+        for key in TeamCounter: 
             for name in key:
                 if name in sentence:
-                    TeamDict[key]+=sentence.sentiment.polarity
-                    continue
-    print TeamDict
-
-
+                    TeamCounter[key]+=sentence.sentiment.polarity
+                    continue #don't double count itmes
+    return TeamCounter

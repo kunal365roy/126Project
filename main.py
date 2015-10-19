@@ -8,11 +8,13 @@ from bs4 import BeautifulSoup
 import sentiment
 from collections import Counter
 from collections import namedtuple
+from textblob import TextBlob
+
 
 TeamRegexTuple = namedtuple('TeamRegexTuple', ['city', 'teamname'])
 
 #http://wolfprojects.altervista.org/articles/change-urllib-user-agent/ 
-num_of_visits = 200
+num_of_visits = 100
 
 print('Starting espn pagerank with ' + str(num_of_visits) + ' visits.')
 
@@ -29,15 +31,10 @@ def domain(url):
     return hostname
     
 #This function will return all the urls on a page, and return the start url if there is an error or no urls
-def parse_links(url, url_start):
+def parse_links(url, soup, url_start):
     url_list = []
     myopener = MyOpener()
     try:
-        #open, read, and parse the text using beautiful soup
-        page = myopener.open(url)
-        text = page.read()
-        page.close()
-        soup = BeautifulSoup(text, "lxml")
         #find all hyperlinks using beautiful soup
         tags = soup.findAll('a', href=True)
         for tag in tags:
@@ -48,7 +45,10 @@ def parse_links(url, url_start):
             return [url_start]
         return url_list
     except Exception as e:
+        import traceback
+        traceback.print_stack()
         print('Exception while parsing url', e)
+        e.printStackTrace()
         return [url_start]
 
 def isValidUrl(url):
@@ -148,19 +148,34 @@ current_url = url_start
 
 #Bad URLs help take care of some pathologies that ruin our surfing
 #Creating a dictionary to keep track of how often we come across a professor
-teamsdict = {}
+team_counter = Counter()
+team_names, team_regexes = generate_teams_regex('teams')
+team_sentiments = Counter()
 
 for i in range(num_of_visits):
     print  i , ' Visiting... ', current_url
     if random.random() < 0.95: #follow a link!
-        url_list = parse_links(current_url, url_start)
-        current_url = random.choice(url_list)
         myopener = MyOpener()
         page = myopener.open(current_url)
         text = page.read()
         page.close()
-        #Figuring out which professor is mentioned on a page.
-        for team in teamsdict:
-            teamsdict[team]+= 1 if " " + p + " " in text else 0 #can use regex re.findall(i,text), but it's overkill
+        soup = BeautifulSoup(text)
+
+        url_list = parse_links(current_url, soup, url_start)
+        current_url = random.choice(url_list)
+
+
+        paragraphs = [p.get_text() for p in soup.findAll('p')]
+        for paragraph in paragraphs:
+            team_sentiments += sentiment.get_sentiment(paragraph)
+
+        #sentiment.get_sentiment()
+        
+        #team_mentions = count_team_mentions(current_url, team_regexes)
+        #print(team_mentions)
+
+
     else: #click the "home" button!
         current_url = url_start
+
+print(team_sentiments)
